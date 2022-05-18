@@ -16,8 +16,6 @@ package executor
 
 import (
 	"context"
-
-	"github.com/opentracing/opentracing-go"
 	"github.com/pingcap/failpoint"
 	"github.com/pingcap/tidb/config"
 	"github.com/pingcap/tidb/metrics"
@@ -58,6 +56,7 @@ func (c *Compiler) Compile(ctx context.Context, stmtNode ast.StmtNode) (*ExecStm
 
 	ret := &plannercore.PreprocessorReturn{}
 	pe := &plannercore.PreprocessExecuteISUpdate{ExecuteInfoSchemaUpdate: planner.GetExecuteForUpdateReadIS, Node: stmtNode}
+	// 做一些合法性检查以及名字绑定；
 	err := plannercore.Preprocess(c.Ctx,
 		stmtNode,
 		plannercore.WithPreprocessorReturn(ret),
@@ -78,6 +77,7 @@ func (c *Compiler) Compile(ctx context.Context, stmtNode ast.StmtNode) (*ExecStm
 	})
 
 	is := sessiontxn.GetTxnManager(c.Ctx).GetTxnInfoSchema()
+	// 制定查询计划，并优化，这个是最核心的步骤之一
 	finalPlan, names, err := planner.Optimize(ctx, c.Ctx, stmtNode, is)
 	if err != nil {
 		return nil, err
@@ -92,6 +92,8 @@ func (c *Compiler) Compile(ctx context.Context, stmtNode ast.StmtNode) (*ExecStm
 	if c.Ctx.GetSessionVars().StmtCtx.Priority == mysql.NoPriority {
 		lowerPriority = needLowerPriority(finalPlan)
 	}
+	// 构造 executor.ExecStmt结构：这个 ExecStmt 结构持有查询计划，是后续执行的基础，非常重要，特别是 Exec 这个方法。
+	// conn.go:handleStmt 会通过 writeResultset 将结果写到客户端。
 	return &ExecStmt{
 		GoCtx:            ctx,
 		ReplicaReadScope: ret.ReadReplicaScope,

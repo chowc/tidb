@@ -54,7 +54,6 @@ import (
 	"time"
 	"unsafe"
 
-	"github.com/opentracing/opentracing-go"
 	"github.com/pingcap/errors"
 	"github.com/pingcap/failpoint"
 	"github.com/pingcap/tidb/config"
@@ -2039,6 +2038,7 @@ func (cc *clientConn) handleStmt(ctx context.Context, stmt ast.StmtNode, warns [
 		if connStatus := atomic.LoadInt32(&cc.status); connStatus == connStatusShutdown {
 			return false, executor.ErrQueryInterrupted
 		}
+		// 写结果给客户端
 		if retryable, err := cc.writeResultset(ctx, rs, false, status, 0); err != nil {
 			return retryable, err
 		}

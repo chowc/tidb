@@ -35,7 +35,6 @@ import (
 	"time"
 
 	"github.com/ngaut/pools"
-	"github.com/opentracing/opentracing-go"
 	"github.com/pingcap/errors"
 	"github.com/pingcap/failpoint"
 	"github.com/pingcap/kvproto/pkg/kvrpcpb"
@@ -57,7 +56,6 @@ import (
 	"github.com/pingcap/tidb/util/topsql"
 	topsqlstate "github.com/pingcap/tidb/util/topsql/state"
 	"github.com/pingcap/tidb/util/topsql/stmtstats"
-	"github.com/pingcap/tipb/go-binlog"
 	tikverr "github.com/tikv/client-go/v2/error"
 	"go.uber.org/zap"
 
@@ -1935,6 +1933,7 @@ func (s *session) ExecuteStmt(ctx context.Context, stmtNode ast.StmtNode) (sqlex
 
 	// Execute the physical plan.
 	logStmt(stmt, s)
+	// 生成执行器之后，被 封装在一个 recordSet结构中。这个结构实现了 ast.RecordSet接口，从字面上大家可以看出，这个接口代表了查询结果集的抽象。
 	recordSet, err := runStmt(ctx, s, stmt)
 	if err != nil {
 		if !errIsNoisy(err) {
