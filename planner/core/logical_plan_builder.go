@@ -3729,6 +3729,7 @@ func (b *PlanBuilder) TableHints() *tableHintInfo {
 	return &(b.tableHintInfo[len(b.tableHintInfo)-1])
 }
 
+// SELECT 的 ast 语法树转成逻辑执行计划（未优化过的），也就是一个逻辑执行计划单元（logical operator）组成的树状结构
 func (b *PlanBuilder) buildSelect(ctx context.Context, sel *ast.SelectStmt) (p LogicalPlan, err error) {
 	b.pushSelectOffset(sel.QueryBlockOffset)
 	b.pushTableHints(sel.TableHints, sel.QueryBlockOffset)
@@ -3859,6 +3860,7 @@ func (b *PlanBuilder) buildSelect(ctx context.Context, sel *ast.SelectStmt) (p L
 	defer func() { b.allNames = b.allNames[:len(b.allNames)-1] }()
 
 	if sel.Where != nil {
+		// 将 Where 条件解析成一个 LogicalSelection 逻辑查询计划单元
 		p, err = b.buildSelection(ctx, p, sel.Where, nil)
 		if err != nil {
 			return nil, err

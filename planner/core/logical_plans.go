@@ -836,6 +836,7 @@ func (la *LogicalAggregation) GetUsedCols() (usedCols []*expression.Column) {
 type LogicalSelection struct {
 	baseLogicalPlan
 
+	// 代表了 Where 语句需要计算的表达式，这个表达式求值结果为 True 的时候，表明这一行符合条件
 	// Originally the WHERE or ON condition is parsed into a single expression,
 	// but after we converted to CNF(Conjunctive normal form), it can be
 	// split into a list of AND conditions.

@@ -260,6 +260,7 @@ func checkStableResultMode(sctx sessionctx.Context) bool {
 	return s.EnableStableResultMode && (!st.InInsertStmt && !st.InUpdateStmt && !st.InDeleteStmt && !st.InLoadDataStmt)
 }
 
+// 对逻辑查询计划进行优化
 // DoOptimize optimizes a logical plan to a physical plan.
 func DoOptimize(ctx context.Context, sctx sessionctx.Context, flag uint64, logic LogicalPlan) (PhysicalPlan, float64, error) {
 	// if there is something after flagPrunColumns, do flagPrunColumnsAgain
@@ -275,6 +276,7 @@ func DoOptimize(ctx context.Context, sctx sessionctx.Context, flag uint64, logic
 	}
 	flag |= flagCollectPredicateColumnsPoint
 	flag |= flagSyncWaitStatsLoadPoint
+	// 逻辑优化，例如删除恒真的表达式
 	logic, err := logicalOptimize(ctx, flag, logic)
 	if err != nil {
 		return nil, 0, err
@@ -286,6 +288,7 @@ func DoOptimize(ctx context.Context, sctx sessionctx.Context, flag uint64, logic
 	if planCounter == 0 {
 		planCounter = -1
 	}
+	// 物理优化，根据统计数据；
 	physical, cost, err := physicalOptimize(logic, &planCounter)
 	if err != nil {
 		return nil, 0, err
